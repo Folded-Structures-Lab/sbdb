@@ -19,7 +19,7 @@ class DesignVariableSet:
     # create_value_function: bool = False
 
     def __post_init__(self):
-        self = self.solve_me()
+        self.solve_me()
 
     def solve_me(self):
         self.param_list = self.read_design_variable_set()
@@ -274,23 +274,3 @@ class VerifiedObjectLibrary:
                 * 100
             )  # in percentage%
             return round(result, 3)
-
-    # def check_error(lib_df, verify_df):
-    #     df = lib_df.copy()
-    #     # df.columns = df.columns.get_values()
-
-    #     lib_dict = make_dict(df)
-    #     verify_dict = make_dict(verify_df)
-
-    #     lap_header = verify_df.columns.intersection(df.columns) #get overlapped attributes of library and verification dataset
-    #     error_df = pd.DataFrame(index = df.index,columns = lap_header)
-
-    # def generate_lib_info(df, ref_class, files):
-    #     units = ref_class().get_units()
-    #     info_df = make_info(df, units)
-    #     toolbox_version = 'StructuralDesignToolbox v0.1'
-    #     df_extra_info = pd.DataFrame({
-    #         "param_name": ["generated_date", "version_info"],
-    #         "unit": [datetime.today().strftime('%Y-%m-%d'), toolbox_version],
-    #     })
-    #     info_df.append(df_extra_info).to_csv(files['output_info'], index=False)
