@@ -1,4 +1,4 @@
-# requires steelas python package
+# NOTE - requires steelas python package to be installed
 from steelas.component.bolt import Bolt
 
 from sbdb import ObjectSet, DesignVariableSet

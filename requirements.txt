@@ -1,3 +1,2 @@
 numpy>=1.25.0
 pandas>=2.0.2
-steelas>=0.1.0
