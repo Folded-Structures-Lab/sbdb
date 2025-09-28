@@ -1,5 +1,5 @@
 """
-Core set-based data structures for generalized structural design.
+Core set-based data structures for generalised structural design.
 
 This module contains the fundamental dataclasses for managing design variable sets,
 object sets, and verification data sets in set-based structural design workflows.

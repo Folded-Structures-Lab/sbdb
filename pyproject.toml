@@ -5,11 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbdb"
 version = "0.1.0"
-description = "Set-Based Database: A framework for generalized set-based structural design"
+description = "Set-Based Database: A framework for generalised set-based structural design"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Yuyu Wang", email = "yuyu.wang@uq.edu.au",
+    name = "Joe Gattas", email = "j.gattas@uq.edu.au"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -40,9 +41,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/steel-as-database"
-Repository = "https://github.com/yourusername/steel-as-database"
-Documentation = "https://github.com/yourusername/steel-as-database#readme"
+Homepage = "https://github.com/yourusername/sbdb"
+Repository = "https://github.com/yourusername/sbdb"
+Documentation = "https://github.com/yourusername/sbdb#readme"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

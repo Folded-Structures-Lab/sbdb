@@ -1,10 +1,10 @@
 # SBDB: Set-Based Database Framework
 
-A framework for generalized set-based structural design data generation and verification.
+A framework for generalised set-based structural design data generation and verification.
 
 ## Overview
 
-SBDB provides a systematic approach to generating and managing large datasets for structural design applications. The framework uses set-based design principles to create comprehensive design spaces through Cartesian products of design variables, enabling systematic exploration and optimization of structural systems.
+SBDB provides a systematic approach to generating and managing large datasets for structural design applications. The framework uses set-based design principles to create comprehensive design spaces through Cartesian products of design variables, enabling systematic exploration and optimisation of structural systems.
 
 ## Features
 
@@ -20,8 +20,8 @@ SBDB provides a systematic approach to generating and managing large datasets fo
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/steel-as-database.git
-cd steel-as-database
+git clone https://github.com/yourusername/sbdb.git
+cd sbdb
 
 # Install in development mode
 pip install -e .
@@ -39,7 +39,7 @@ pip install -e .
 ## Package Structure
 
 ```
-steel-as-database/
+sbdb/
 ├── src/sbdb/                          # Core SBDB framework
 │   ├── __init__.py
 │   ├── sets.py                        # Core set-based data structures
@@ -209,7 +209,7 @@ If you use this framework in your research, please cite:
   title={SBDB: Set-Based Database Framework for Structural Design},
   author={Your Name},
   year={2024},
-  url={https://github.com/yourusername/steel-as-database}
+  url={https://github.com/yourusername/sbdb}
 }
 ```
 
@@ -217,4 +217,4 @@ If you use this framework in your research, please cite:
 
 - Steel structural design examples use the `steelas` package
 - Verification data sourced from ASI and Tekla software
-- Framework developed for academic research in structural optimization
+- Framework developed for academic research in structural optimisation
