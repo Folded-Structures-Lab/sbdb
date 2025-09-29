@@ -5,6 +5,12 @@ A framework for generalised set-based structural design data generation and veri
 """
 
 from .sets import DesignVariableSet, ObjectSet, VerifiedObjectLibrary
+from .tracking import DatasetTracker
 
 __version__ = "0.1.0"
-__all__ = ["DesignVariableSet", "ObjectSet", "VerifiedObjectLibrary"]
+__all__ = [
+    "DesignVariableSet", 
+    "ObjectSet", 
+    "VerifiedObjectLibrary",
+    "DatasetTracker"
+]

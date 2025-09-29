@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sbdb"
-version = "0.1.0"
+version = "0.1.1"
 description = "Set-Based Database: A framework for generalised set-based structural design"
 readme = "README.md"
 license = {file = "LICENSE"}
