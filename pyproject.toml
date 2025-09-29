@@ -9,8 +9,8 @@ description = "Set-Based Database: A framework for generalised set-based structu
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Yuyu Wang", email = "yuyu.wang@uq.edu.au",
-    name = "Joe Gattas", email = "j.gattas@uq.edu.au"}
+    {name = "Yuyu Wang", email = "yuyu.wang@uq.edu.au"},
+    {name = "Joe Gattas", email = "j.gattas@uq.edu.au"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
