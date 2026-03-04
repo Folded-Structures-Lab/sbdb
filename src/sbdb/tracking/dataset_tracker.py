@@ -292,11 +292,12 @@ class DatasetTracker:
         print(f"\n📊 Dataset Generation Status Summary")
         print(f"{'='*50}")
         print(f"Total Collections: {total_collections}")
-        print(f"Generated: {generated} ({generated/total_collections*100:.1f}%)")
-        print(f"Dataset Verified: {verified} ({verified/total_collections*100:.1f}%)")
-        print(f"Database Populated: {populated} ({populated/total_collections*100:.1f}%)")
-        print(f"Database Verified: {db_verified} ({db_verified/total_collections*100:.1f}%)")
-        
+        if total_collections > 0:
+            print(f"Generated: {generated} ({generated/total_collections*100:.1f}%)")
+            print(f"Dataset Verified: {verified} ({verified/total_collections*100:.1f}%)")
+            print(f"Database Populated: {populated} ({populated/total_collections*100:.1f}%)")
+            print(f"Database Verified: {db_verified} ({db_verified/total_collections*100:.1f}%)")
+            
         # Category breakdown
         print(f"\n📂 By Category:")
         category_counts = df['category'].value_counts()
