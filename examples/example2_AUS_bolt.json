@@ -1,0 +1,5 @@
+{
+  "d_f": [12,16,20,24,30,36],
+  "bolt_cat": ["4.6/S", "8.8/S", "8.8/TF", "8.8/TB"],
+  "threads_included": [true,false]
+}
