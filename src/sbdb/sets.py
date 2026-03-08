@@ -75,6 +75,12 @@ class DesignVariableSet:
             val_fn[key] = val_fn_dict
         return val_fn
 
+    def as_df(self) -> pd.DataFrame:
+        """
+        Convert the design variable set to a pandas DataFrame.
+        """
+        return pd.DataFrame(self.param_list)    
+
     @classmethod
     def from_json(cls, filename):
         """
