@@ -4,7 +4,7 @@ SBDB Example 2: Australian Bolt Library Generation
 This example demonstrates SBDB core functionality using the steelas package
 to generate a comprehensive library of Australian standard bolts.
 
-NOTE - requires steelas v0.2.0 python package to be installed
+NOTE - requires steelas >v0.1.0 python package to be installed
 """
 
 from steelas.component.bolt import Bolt

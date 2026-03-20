@@ -101,7 +101,7 @@ def main():
     # Step 6: Export results (optional)
     print("\n6. Exporting results...")
     df.to_csv("examples/example1_simple_beam.csv", index=False)
-    print("   Results saved to 'examples/basic_beam_library.csv'")
+    print("   Results saved to 'examples/example1_simple_beam.csv'")
     
     print("\nExample completed successfully!")
     print("=" * 50)
