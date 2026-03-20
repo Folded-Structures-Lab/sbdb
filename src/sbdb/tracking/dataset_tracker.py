@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import csv
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -187,9 +186,9 @@ class DatasetTracker:
             filename = output_config.get("filename", "output")
             filetypes = output_config.get("filetypes", ["csv"])
 
-            # Build output file paths
+            # Build output file paths (use forward slashes for consistency)
             output_files = [
-                os.path.join(folder, f"{filename}.{ft}")
+                f"{folder}/{filename}.{ft}"
                 for ft in filetypes
             ]
 

@@ -1,25 +1,18 @@
 {
   "reference_class": "steelas.component.bolt.Bolt",
-  "design_parameter_set": {
-    "d_f": [12, 16, 20, 24, 30, 36],
-    "bolt_cat": ["4.6/S", "8.8/S", "8.8/TF", "8.8/TB"],
-    "threads_included": [true, false]
-  },
+  "design_parameter_dict": "examples/example5_bolt_parameter_dict.csv",
   "report_attrs": [
     "name",
     "bolt_des",
     "bolt_cat",
     "threads_included",
     "d_f",
-    "d_h",
-    "a_e_min",
-    "s_p_min",
     "phiV_f",
     "phiN_tf"
   ],
   "output": {
     "folder": "examples/output_datasets",
-    "filename": "example2_bolt_library",
+    "filename": "example5_bolt_library",
     "filetypes": ["csv", "json"]
   }
 }

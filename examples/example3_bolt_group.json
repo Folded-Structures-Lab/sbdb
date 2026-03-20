@@ -1,9 +1,9 @@
 {
   "reference_class": "steelas.component.bolt.BoltGroup2D",
-  "design_variables": {
+  "design_parameter_set": {
     "bolt": {
         "reference_class": "steelas.component.bolt.Bolt",
-        "design_variables": {
+        "design_parameter_set": {
           "d_f": [20, 24],
           "bolt_cat": ["8.8/S"],
           "threads_included": [true]

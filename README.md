@@ -41,7 +41,7 @@ pip install -e .
 ### Basic Usage
 
 ```python
-from sbdb import DesignVariableSet, ObjectSet, VerifiedObjectLibrary
+from sbdb import DesignParameterSet, ObjectSet, VerifiedObjectLibrary
 
 # 1. Define design variables
 design_vars = {
@@ -51,7 +51,7 @@ design_vars = {
 }
 
 # 2. Create design variable set
-dvs = DesignVariableSet(design_var_sets=design_vars)
+dvs = DesignParameterSet(design_param_sets=design_vars)
 print(f"Generated {len(dvs.param_list)} parameter combinations")
 
 # 3. Generate object set (requires your structural class)
@@ -109,16 +109,16 @@ python -m examples.steel_structural_design.populate_steel_db
 
 ## Core Classes
 
-### DesignVariableSet
+### DesignParameterSet
 
 Manages design variable sets for combinatorial design space generation.
 
 ```python
 # From dictionary
-dvs = DesignVariableSet(design_var_sets={"var1": [1,2,3], "var2": ["a","b"]})
+dvs = DesignParameterSet(design_param_sets={"var1": [1,2,3], "var2": ["a","b"]})
 
 # From JSON file
-dvs = DesignVariableSet.from_json("design_vars.json")
+dvs = DesignParameterSet.from_json("design_vars.json")
 
 # Access parameter combinations
 print(len(dvs.param_list))  # 6 combinations

@@ -1,6 +1,6 @@
 {
   "reference_class": "example1_simple_beam.SimpleBeam",
-  "design_variables": {
+  "design_parameter_set": {
     "length": [1000, 2000, 3000],
     "width": [100, 150, 200],
     "height": [200, 300, 400],

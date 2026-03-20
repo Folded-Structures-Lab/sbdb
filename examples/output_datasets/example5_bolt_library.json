@@ -1,0 +1,29 @@
+[
+  {
+    "name":"M16 8.8\/S (TI)",
+    "bolt_des":"M16",
+    "bolt_cat":"8.8\/S",
+    "threads_included":true,
+    "d_f":16,
+    "phiV_f":59.3,
+    "phiN_tf":104.0
+  },
+  {
+    "name":"M20 8.8\/S (TI)",
+    "bolt_des":"M20",
+    "bolt_cat":"8.8\/S",
+    "threads_included":true,
+    "d_f":20,
+    "phiV_f":92.7,
+    "phiN_tf":163.0
+  },
+  {
+    "name":"M24 8.8\/S (TI)",
+    "bolt_des":"M24",
+    "bolt_cat":"8.8\/S",
+    "threads_included":true,
+    "d_f":24,
+    "phiV_f":133.0,
+    "phiN_tf":234.0
+  }
+]

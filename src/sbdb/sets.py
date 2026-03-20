@@ -1,7 +1,7 @@
 """
 Core set-based data structures for generalised structural design.
 
-This module contains the fundamental dataclasses for managing design variable sets,
+This module contains the fundamental dataclasses for managing design parameter sets,
 object sets, and verification data sets in set-based structural design workflows.
 """
 
@@ -38,34 +38,34 @@ def _import_class(dotted_path: str) -> type:
 
 
 @dataclass(kw_only=True)
-class DesignVariableSet:
+class DesignParameterSet:
     """
-    Manages design variable sets for combinatorial design space generation.
+    Manages design parameter sets for combinatorial design space generation.
 
-    Creates all possible combinations of design variables using Cartesian product,
+    Creates all possible combinations of design parameters using Cartesian product,
     enabling systematic exploration of design spaces.
     """
 
-    design_var_sets: dict[str, object]
+    design_param_sets: dict[str, object]
     param_list: list[dict] = field(init=False)
 
     def __post_init__(self):
         self.solve_me()
 
     def solve_me(self):
-        """Generate parameter list from design variable sets."""
+        """Generate parameter list from design parameter sets."""
         self.param_list = self.read_design_variable_set()
 
     def read_design_variable_set(self) -> list[dict]:
         """
-        Returns a design variable set (list of dict, with dict containing class
+        Returns a design parameter set (list of dict, with dict containing class
         instancing attributes).
 
         Uses Cartesian product to generate all possible combinations of design
-        variables.
+        parameters.
         """
         design_var_dicts = []
-        data = self.design_var_sets
+        data = self.design_param_sets
         keys = list(data.keys())
         design_var_cross_product = itertools.product(*data.values())
         for d in design_var_cross_product:
@@ -74,24 +74,26 @@ class DesignVariableSet:
 
     def replace_variable(self, var_name: str, op: Callable):
         """
-        Apply an operation to a named design variable and rebuild the parameter list.
+        Apply an operation to a named design parameter and rebuild the parameter list.
 
         Args:
-            var_name: Name of the design variable to modify
-            op: Function to apply to each value in the variable set
+            var_name: Name of the design parameter to modify
+            op: Function to apply to each value in the parameter set
         """
-        self.design_var_sets[var_name] = [op(v) for v in self.design_var_sets[var_name]]
+        self.design_param_sets[var_name] = [
+            op(v) for v in self.design_param_sets[var_name]
+        ]
         self.solve_me()
 
     def create_value_function(self) -> dict[str, float]:
         """
-        Create value function for design variables (descending order preference).
+        Create value function for design parameters (descending order preference).
 
         Returns:
             Dictionary mapping variable names to value functions
         """
         val_fn = {}
-        for key, val in self.design_var_sets.items():
+        for key, val in self.design_param_sets.items():
             N = len(val)
             # Descending order - first items have higher value
             v_i = [(N - v) / N for v in list(range(N))]
@@ -101,35 +103,35 @@ class DesignVariableSet:
 
     def as_df(self) -> pd.DataFrame:
         """
-        Convert the design variable set to a pandas DataFrame.
+        Convert the design parameter set to a pandas DataFrame.
         """
         return pd.DataFrame(self.param_list)
 
     @classmethod
     def from_json(cls, filename):
         """
-        Create DesignVariableSet from JSON file.
+        Create DesignParameterSet from JSON file.
 
         Supports both the simple format (flat dict of variable lists) and the
-        extended format (dict with a "design_variables" key).
+        extended format (dict with a "design_parameter_set" key).
 
         Args:
-            filename: Path to JSON file containing design variable sets
+            filename: Path to JSON file containing design parameter sets
         """
         with open(filename) as json_file:
             data = json.load(json_file)
-            # Support extended JSON schema: extract design_variables if present
-            if "design_variables" in data:
-                return cls(design_var_sets=data["design_variables"])
-            return cls(design_var_sets=data)
+            # Support extended JSON schema: extract design_parameter_set if present
+            if "design_parameter_set" in data:
+                return cls(design_param_sets=data["design_parameter_set"])
+            return cls(design_param_sets=data)
 
     @classmethod
-    def merge_parameter_lists(cls, merge_list: list[DesignVariableSet]) -> list[dict]:
+    def merge_parameter_lists(cls, merge_list: list[DesignParameterSet]) -> list[dict]:
         """
-        Returns a merged parameter list, combined from multiple DesignVariableSets.
+        Returns a merged parameter list, combined from multiple DesignParameterSets.
 
         Args:
-            merge_list: List of DesignVariableSet instances to merge
+            merge_list: List of DesignParameterSet instances to merge
         """
         param_list = []
         for m in merge_list:
@@ -141,7 +143,7 @@ class DesignVariableSet:
 @dataclass(kw_only=True)
 class ObjectSet:
     """
-    Generates object sets from design variables using a reference class.
+    Generates object sets from design parameters using a reference class.
 
     Creates instances of a reference class for each parameter combination,
     handling errors gracefully and providing progress feedback.
@@ -163,7 +165,7 @@ class ObjectSet:
     def generate_object_set(self) -> Tuple[list, pd.DataFrame]:
         """
         Calculate the object sets and object libraries from the provided reference class
-        and design variable list.
+        and design parameter list.
 
         Returns:
             Tuple of (object_set, object_library_dataframe)
@@ -240,12 +242,21 @@ class ObjectSet:
         """
         Create an ObjectSet from a JSON descriptor file.
 
-        The JSON file should contain:
+        The JSON file supports two modes:
+
+        **Generation mode** (design_parameter_set):
             - "reference_class" (required): Dotted import path to the class
               (e.g., "steelas.component.bolt.Bolt")
-            - "design_variables" (required): Dict of variable names to value lists
-            - "report_attrs" (optional): List of attribute names to report.
-              If omitted, all class annotations are used.
+            - "design_parameter_set" (required): Dict of variable names to
+              value lists
+
+        **Import mode** (design_parameter_dict):
+            - "design_parameter_dict" (required): Path to a CSV file to load directly
+              as the object library. No class instantiation is performed.
+
+        **Common optional fields** (both modes):
+            - "report_attrs" (optional): List of attribute/column names to
+              include. If omitted, all are used.
             - "output" (optional): Export configuration dict with keys:
                 - "folder" (str): Output directory path
                 - "filename" (str): Base filename (without extension)
@@ -266,7 +277,7 @@ class ObjectSet:
 
             {
                 "reference_class": "steelas.component.bolt.Bolt",
-                "design_variables": {
+                "design_parameter_set": {
                     "d_f": [12, 16, 20, 24, 30, 36],
                     "bolt_cat": ["4.6/S", "8.8/S", "8.8/TF", "8.8/TB"],
                     "threads_included": [true, false]
@@ -283,49 +294,93 @@ class ObjectSet:
             data = json.load(json_file)
 
         # Validate required fields
-        if "reference_class" not in data:
+        if "reference_class" not in data and "design_parameter_dict" not in data:
             raise ValueError(
-                f"JSON file '{filename}' missing required field 'reference_class'"
+                f"JSON file '{filename}' missing 'reference_class' "
+                "or 'design_parameter_dict'"
             )
-        if "design_variables" not in data:
-            raise ValueError(
-                f"JSON file '{filename}' missing required field 'design_variables'"
-            )
-
-        # Import the reference class from dotted path
-        reference_class = _import_class(data["reference_class"])
-
-        # Resolve nested object set design variables
-        # If a design variable value is a dict with "reference_class" and
-        # "design_variables", it is a nested ObjectSet descriptor. Generate
-        # that ObjectSet and replace the variable with its object_set list.
-        design_vars = data["design_variables"]
-        for var_name, var_value in design_vars.items():
-            if isinstance(var_value, dict) and "reference_class" in var_value:
-                nested_class = _import_class(var_value["reference_class"])
-                nested_dvs = DesignVariableSet(
-                    design_var_sets=var_value["design_variables"]
-                )
-                nested_obj_set = cls(
-                    reference_class=nested_class,
-                    param_list=nested_dvs.param_list,
-                    report_attrs=var_value.get("report_attrs", None),
-                )
-                design_vars[var_name] = nested_obj_set.object_set
-
-        # Build design variable set
-        dvs = DesignVariableSet(design_var_sets=design_vars)
 
         # Extract optional fields
         report_attrs = data.get("report_attrs", None)
         output_config = data.get("output", None)
 
-        # Create the ObjectSet
-        obj_set = cls(
-            reference_class=reference_class,
-            param_list=dvs.param_list,
-            report_attrs=report_attrs,
-        )
+        # Handle design_parameter_dict mode: load CSV as param_list, then generate
+        if "design_parameter_dict" in data:
+            import_path = data["design_parameter_dict"]
+            import_df = pd.read_csv(import_path)
+            param_list = import_df.to_dict(orient="records")
+
+            # If reference_class is provided, instantiate objects
+            if "reference_class" in data:
+                reference_class = _import_class(data["reference_class"])
+                obj_set = cls(
+                    reference_class=reference_class,
+                    param_list=param_list,
+                    report_attrs=report_attrs,
+                )
+            else:
+                # No class — just use the CSV as the library directly
+                if report_attrs is not None:
+                    import_df = import_df[report_attrs]
+                obj_set = object.__new__(cls)
+                obj_set.reference_class = None
+                obj_set.param_list = param_list
+                obj_set.report_attrs = (
+                    report_attrs
+                    if report_attrs
+                    else list(import_df.columns)
+                )
+                obj_set.object_set = []
+                obj_set.object_library = import_df
+                obj_set.value_fn = None
+                obj_set.skipped_indices = []
+
+        else:
+            # Standard generation mode
+            if "design_parameter_set" not in data:
+                raise ValueError(
+                    f"JSON file '{filename}' missing required "
+                    "field 'design_parameter_set'"
+                )
+
+            # Import the reference class from dotted path
+            reference_class = _import_class(data["reference_class"])
+
+            # Resolve nested object set design parameters
+            design_vars = data["design_parameter_set"]
+            for var_name, var_value in design_vars.items():
+                if (
+                    isinstance(var_value, dict)
+                    and "reference_class" in var_value
+                ):
+                    nested_class = _import_class(
+                        var_value["reference_class"]
+                    )
+                    nested_dvs = DesignParameterSet(
+                        design_param_sets=var_value[
+                            "design_parameter_set"
+                        ]
+                    )
+                    nested_obj_set = cls(
+                        reference_class=nested_class,
+                        param_list=nested_dvs.param_list,
+                        report_attrs=var_value.get(
+                            "report_attrs", None
+                        ),
+                    )
+                    design_vars[var_name] = (
+                        nested_obj_set.object_set
+                    )
+
+            # Build design parameter set
+            dvs = DesignParameterSet(design_param_sets=design_vars)
+
+            # Create the ObjectSet
+            obj_set = cls(
+                reference_class=reference_class,
+                param_list=dvs.param_list,
+                report_attrs=report_attrs,
+            )
 
         # Export files if output config specified and autoexport is enabled
         exported_files = []
@@ -338,7 +393,7 @@ class ObjectSet:
             os.makedirs(folder, exist_ok=True)
 
             for filetype in filetypes:
-                filepath = os.path.join(folder, f"{base_filename}.{filetype}")
+                filepath = f"{folder}/{base_filename}.{filetype}"
                 if filetype == "csv":
                     obj_set.object_library.to_csv(filepath, index=False)
                 elif filetype == "json":

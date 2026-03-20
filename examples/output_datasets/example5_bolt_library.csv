@@ -1,0 +1,4 @@
+name,bolt_des,bolt_cat,threads_included,d_f,phiV_f,phiN_tf
+M16 8.8/S (TI),M16,8.8/S,True,16,59.3,104.0
+M20 8.8/S (TI),M20,8.8/S,True,20,92.7,163.0
+M24 8.8/S (TI),M24,8.8/S,True,24,133.0,234.0
