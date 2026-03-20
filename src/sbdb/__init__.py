@@ -9,9 +9,4 @@ from .sets import DesignVariableSet, ObjectSet, VerifiedObjectLibrary
 from .tracking import DatasetTracker
 
 __version__ = "0.1.2"
-__all__ = [
-    "DesignVariableSet",
-    "ObjectSet",
-    "VerifiedObjectLibrary",
-    "DatasetTracker"
-]
+__all__ = ["DesignVariableSet", "ObjectSet", "VerifiedObjectLibrary", "DatasetTracker"]

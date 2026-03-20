@@ -1,0 +1,21 @@
+{
+  "reference_class": "example1_simple_beam.SimpleBeam",
+  "design_variables": {
+    "length": [1000, 2000, 3000],
+    "width": [100, 150, 200],
+    "height": [200, 300, 400],
+    "material": ["steel", "aluminium"]
+  },
+  "report_attrs": [
+    "name",
+    "length",
+    "width",
+    "height",
+    "material",
+    "area",
+    "volume",
+    "second_moment",
+    "mass"
+  ],
+  "output": "examples/example1_simple_beam.csv"
+}

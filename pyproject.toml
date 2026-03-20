@@ -36,6 +36,9 @@ examples = [
     "steelas>=0.2.0",
 ]
 
+[project.scripts]
+sbdb-generate = "sbdb.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/Folded-Structures-Lab/sbdb"
 Repository = "https://github.com/Folded-Structures-Lab/sbdb"

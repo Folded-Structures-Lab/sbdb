@@ -7,13 +7,33 @@ object sets, and verification data sets in set-based structural design workflows
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import importlib
 import itertools
 import json
+from dataclasses import dataclass, field
 from typing import Callable, Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+
+def _import_class(dotted_path: str) -> type:
+    """
+    Import a class from a dotted module path.
+
+    Args:
+        dotted_path: Fully qualified class path (e.g., 'steelas.component.bolt.Bolt')
+
+    Returns:
+        The imported class object
+
+    Raises:
+        ImportError: If the module cannot be imported
+        AttributeError: If the class is not found in the module
+    """
+    module_path, class_name = dotted_path.rsplit(".", 1)
+    module = importlib.import_module(module_path)
+    return getattr(module, class_name)
 
 
 @dataclass(kw_only=True)
@@ -89,11 +109,17 @@ class DesignVariableSet:
         """
         Create DesignVariableSet from JSON file.
 
+        Supports both the simple format (flat dict of variable lists) and the
+        extended format (dict with a "design_variables" key).
+
         Args:
             filename: Path to JSON file containing design variable sets
         """
         with open(filename) as json_file:
             data = json.load(json_file)
+            # Support extended JSON schema: extract design_variables if present
+            if "design_variables" in data:
+                return cls(design_var_sets=data["design_variables"])
             return cls(design_var_sets=data)
 
     @classmethod
@@ -205,6 +231,83 @@ class ObjectSet:
         vals = self.object_set
         keys = list(self.object_library[index_name])
         return dict(zip(keys, vals))
+
+    @classmethod
+    def from_json(
+        cls, filename: str, autoexport: bool = True
+    ) -> Tuple[ObjectSet, str | None]:
+        """
+        Create an ObjectSet from a JSON descriptor file.
+
+        The JSON file should contain:
+            - "reference_class" (required): Dotted import path to the class
+              (e.g., "steelas.component.bolt.Bolt")
+            - "design_variables" (required): Dict of variable names to value lists
+            - "report_attrs" (optional): List of attribute names to report.
+              If omitted, all class annotations are used.
+            - "output" (optional): File path to export the object library as CSV.
+
+        Args:
+            filename: Path to JSON descriptor file
+            autoexport: If True, automatically export to CSV when an
+                "output" path is specified in the JSON file. If False
+                (default), skip the export even if "output" is present.
+
+        Returns:
+            Tuple of (ObjectSet instance, exported file path or None).
+            The file path is the "output" value from the JSON if autoexport
+            was True and the file was written, otherwise None.
+
+        Example JSON file::
+
+            {
+                "reference_class": "steelas.component.bolt.Bolt",
+                "design_variables": {
+                    "d_f": [12, 16, 20, 24, 30, 36],
+                    "bolt_cat": ["4.6/S", "8.8/S", "8.8/TF", "8.8/TB"],
+                    "threads_included": [true, false]
+                },
+                "report_attrs": ["name", "d_f", "phiV_f", "phiN_tf"],
+                "output": "bolt_library.csv"
+            }
+        """
+        with open(filename) as json_file:
+            data = json.load(json_file)
+
+        # Validate required fields
+        if "reference_class" not in data:
+            raise ValueError(
+                f"JSON file '{filename}' missing required field 'reference_class'"
+            )
+        if "design_variables" not in data:
+            raise ValueError(
+                f"JSON file '{filename}' missing required field 'design_variables'"
+            )
+
+        # Import the reference class from dotted path
+        reference_class = _import_class(data["reference_class"])
+
+        # Build design variable set
+        dvs = DesignVariableSet(design_var_sets=data["design_variables"])
+
+        # Extract optional fields
+        report_attrs = data.get("report_attrs", None)
+        output = data.get("output", None)
+
+        # Create the ObjectSet
+        obj_set = cls(
+            reference_class=reference_class,
+            param_list=dvs.param_list,
+            report_attrs=report_attrs,
+        )
+
+        # Export to CSV if output path specified and autoexport is enabled
+        exported_file = None
+        if autoexport and output is not None:
+            obj_set.object_library.to_csv(output, index=False)
+            exported_file = output
+
+        return obj_set, exported_file
 
 
 @dataclass(kw_only=True)
