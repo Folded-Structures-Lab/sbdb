@@ -8,5 +8,5 @@ and verification.
 from .sets import DesignVariableSet, ObjectSet, VerifiedObjectLibrary
 from .tracking import DatasetTracker
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __all__ = ["DesignVariableSet", "ObjectSet", "VerifiedObjectLibrary", "DatasetTracker"]

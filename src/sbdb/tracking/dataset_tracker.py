@@ -11,6 +11,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -95,6 +96,61 @@ class DatasetTracker:
     ):
         self.json_files = json_files
         self.record_file = Path(record_file)
+
+    @classmethod
+    def from_record_file(cls, record_file: str) -> DatasetTracker:
+        """Create a DatasetTracker from an existing record CSV file.
+
+        Reads the ``json_descriptor`` column from the record to
+        reconstruct the list of JSON files.
+
+        Args:
+            record_file: Path to an existing dataset record CSV file.
+
+        Returns:
+            A DatasetTracker instance with json_files and record_file
+            populated from the existing record.
+
+        Raises:
+            FileNotFoundError: If the record file does not exist.
+        """
+        record_path = Path(record_file)
+        if not record_path.exists():
+            raise FileNotFoundError(
+                f"Record file '{record_file}' not found."
+            )
+        df = pd.read_csv(
+            record_path, dtype=str, keep_default_na=False
+        )
+        json_files = df["json_descriptor"].tolist()
+        tracker = cls(
+            json_files=json_files, record_file=record_file
+        )
+        return tracker
+
+    @staticmethod
+    def get_dataset_name(json_file: str) -> str:
+        """Get the dataset name from an ObjectSet JSON descriptor file.
+
+        Reads the ``output.filename`` field from the JSON file.
+
+        Args:
+            json_file: Path to the ObjectSet JSON descriptor file.
+
+        Returns:
+            The dataset name (output filename) from the JSON file.
+
+        Raises:
+            ValueError: If the JSON file has no output configuration.
+        """
+        with open(json_file) as f:
+            data = json.load(f)
+        output_config = data.get("output", None)
+        if output_config is None:
+            raise ValueError(
+                f"JSON file '{json_file}' has no 'output' config"
+            )
+        return output_config.get("filename", "output")
 
     def initialise_record(self) -> Path:
         """Create the tracking record CSV from JSON descriptor files.
@@ -193,4 +249,96 @@ class DatasetTracker:
                 "Run initialise_record() first."
             )
             return pd.DataFrame(columns=self.FIELDNAMES)
-        return pd.read_csv(self.record_file)
+        return pd.read_csv(self.record_file, dtype=str, keep_default_na=False)
+
+    def print_record(self, dataset_name: str | None = None) -> None:
+        """Print a formatted summary of one or all tracked datasets.
+
+        Args:
+            dataset_name: Name of a specific dataset to print.
+                If None (default), prints all datasets.
+        """
+        df = self.get_record()
+        if df.empty:
+            return
+
+        if dataset_name is not None:
+            df = df[df["dataset_name"] == dataset_name]
+            if df.empty:
+                print(f"Dataset '{dataset_name}' not found in record.")
+                return
+
+        for _, row in df.iterrows():
+            print(f"\n  Dataset: {row['dataset_name']}")
+            print(f"    JSON descriptor:  {row['json_descriptor']}")
+            print(f"    Reference class:  {row['reference_class']}")
+            print(
+                "    Package version:  "
+                f"{row['reference_package_version']}"
+            )
+            print(f"    SBDB version:     {row['sbdb_version']}")
+            print(f"    Output folder:    {row['output_folder']}")
+            print(f"    File types:       {row['filetypes']}")
+            print(f"    Output files:     {row['output_files']}")
+            print(f"    Record count:     {row['record_count']}")
+            print(f"    Last generated:   {row['last_generated']}")
+            print(f"    Notes:            {row['notes']}")
+
+    def update_record(
+        self,
+        dataset_name: str,
+        notes: str | None = None,
+    ) -> None:
+        """Update a dataset's record after generation.
+
+        Sets the last_generated timestamp, refreshes package versions,
+        and updates the record count from the output CSV file.
+
+        Args:
+            dataset_name: Name of the dataset to update.
+            notes: Optional notes to set on the record.
+        """
+        df = self.get_record()
+        if df.empty:
+            print("No record file found. Run initialise_record() first.")
+            return
+
+        mask = df["dataset_name"] == dataset_name
+        if not mask.any():
+            print(f"Dataset '{dataset_name}' not found in record.")
+            return
+
+        # Update timestamp
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        df.loc[mask, "last_generated"] = now
+
+        # Update package versions
+        df.loc[mask, "sbdb_version"] = sbdb.__version__
+        ref_class = df.loc[mask, "reference_class"].iloc[0]
+        if ref_class:
+            ref_package = ref_class.split(".")[0]
+            df.loc[mask, "reference_package_version"] = (
+                get_package_version(ref_package)
+            )
+
+        # Update record count from output files
+        output_files_str = df.loc[mask, "output_files"].iloc[0]
+        if pd.notna(output_files_str):
+            for fp in output_files_str.split(", "):
+                meta = get_file_metadata(fp.strip())
+                if meta["record_count"] is not None:
+                    df.loc[mask, "record_count"] = str(
+                        meta["record_count"]
+                    )
+                    break
+
+        # Update notes if provided
+        if notes is not None:
+            df.loc[mask, "notes"] = notes
+
+        # Save
+        df.to_csv(self.record_file, index=False)
+        print(
+            f"Updated '{dataset_name}' — "
+            f"last_generated: {now}"
+        )
