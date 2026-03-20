@@ -295,8 +295,26 @@ class ObjectSet:
         # Import the reference class from dotted path
         reference_class = _import_class(data["reference_class"])
 
+        # Resolve nested object set design variables
+        # If a design variable value is a dict with "reference_class" and
+        # "design_variables", it is a nested ObjectSet descriptor. Generate
+        # that ObjectSet and replace the variable with its object_set list.
+        design_vars = data["design_variables"]
+        for var_name, var_value in design_vars.items():
+            if isinstance(var_value, dict) and "reference_class" in var_value:
+                nested_class = _import_class(var_value["reference_class"])
+                nested_dvs = DesignVariableSet(
+                    design_var_sets=var_value["design_variables"]
+                )
+                nested_obj_set = cls(
+                    reference_class=nested_class,
+                    param_list=nested_dvs.param_list,
+                    report_attrs=var_value.get("report_attrs", None),
+                )
+                design_vars[var_name] = nested_obj_set.object_set
+
         # Build design variable set
-        dvs = DesignVariableSet(design_var_sets=data["design_variables"])
+        dvs = DesignVariableSet(design_var_sets=design_vars)
 
         # Extract optional fields
         report_attrs = data.get("report_attrs", None)

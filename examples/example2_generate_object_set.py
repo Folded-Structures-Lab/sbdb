@@ -18,7 +18,7 @@ def main():
 
     # Generate object set from JSON descriptor file
     print("\n1. Generating object set from JSON descriptor...")
-    obj_set, exported_files = ObjectSet.from_json("examples/example2_AUS_bolt.json")
+    obj_set, exported_files = ObjectSet.from_json("examples/example2_bolt.json")
     print(f"   Successfully created {len(obj_set.object_set)} bolt objects")
     if exported_files:
         for f in exported_files:

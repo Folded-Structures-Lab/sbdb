@@ -19,7 +19,7 @@
   ],
   "output": {
     "folder": "examples/output_datasets",
-    "filename": "example1_simple_beam",
+    "filename": "example1_simple_beam_library",
     "filetypes": ["csv"]
   }
 }

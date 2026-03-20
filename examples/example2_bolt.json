@@ -19,7 +19,7 @@
   ],
   "output": {
     "folder": "examples/output_datasets",
-    "filename": "example2_AUS_bolt_library",
+    "filename": "example2_bolt_library",
     "filetypes": ["csv", "json"]
   }
 }

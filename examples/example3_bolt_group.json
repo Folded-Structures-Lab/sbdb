@@ -1,5 +1,5 @@
 {
-  "reference_class": "steelas.component.bolt.BoltGroup",
+  "reference_class": "steelas.component.bolt.BoltGroup2D",
   "design_variables": {
     "bolt": {
         "reference_class": "steelas.component.bolt.Bolt",
@@ -16,16 +16,16 @@
   },
   "report_attrs": [
     "name",
-    "bolt",
     "n_p",
     "n_g",
     "s_p",
     "s_g",
+    "bolt_name",
     "constr"
   ],
   "output": {
-    "folder": "datasets/components",
-    "filename": "AUS_bolt_group",
+    "folder": "examples/output_datasets",
+    "filename": "example3_bolt_group_library",
     "filetypes": ["csv"]
   }
 }
