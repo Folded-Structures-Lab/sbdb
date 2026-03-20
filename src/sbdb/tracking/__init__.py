@@ -7,6 +7,7 @@ and database population activities with timestamps and package version informati
 
 from .dataset_tracker import (
     DatasetTracker,
+    get_package_version,
     get_file_metadata,
     categorise_collection
 )

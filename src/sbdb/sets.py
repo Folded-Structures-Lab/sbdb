@@ -20,10 +20,11 @@ import numpy as np
 class DesignVariableSet:
     """
     Manages design variable sets for combinatorial design space generation.
-    
+
     Creates all possible combinations of design variables using Cartesian product,
     enabling systematic exploration of design spaces.
     """
+
     design_var_sets: dict[str, object]
     param_list: list[dict] = field(init=False)
 
@@ -36,9 +37,11 @@ class DesignVariableSet:
 
     def read_design_variable_set(self) -> list[dict]:
         """
-        Returns a design variable set (list of dict, with dict containing class instancing attributes).
-        
-        Uses Cartesian product to generate all possible combinations of design variables.
+        Returns a design variable set (list of dict, with dict containing class
+        instancing attributes).
+
+        Uses Cartesian product to generate all possible combinations of design
+        variables.
         """
         design_var_dicts = []
         data = self.design_var_sets
@@ -51,7 +54,7 @@ class DesignVariableSet:
     def replace_variable(self, var_name: str, op: Callable):
         """
         Apply an operation to a named design variable and rebuild the parameter list.
-        
+
         Args:
             var_name: Name of the design variable to modify
             op: Function to apply to each value in the variable set
@@ -62,7 +65,7 @@ class DesignVariableSet:
     def create_value_function(self) -> dict[str, float]:
         """
         Create value function for design variables (descending order preference).
-        
+
         Returns:
             Dictionary mapping variable names to value functions
         """
@@ -79,13 +82,13 @@ class DesignVariableSet:
         """
         Convert the design variable set to a pandas DataFrame.
         """
-        return pd.DataFrame(self.param_list)    
+        return pd.DataFrame(self.param_list)
 
     @classmethod
     def from_json(cls, filename):
         """
         Create DesignVariableSet from JSON file.
-        
+
         Args:
             filename: Path to JSON file containing design variable sets
         """
@@ -97,7 +100,7 @@ class DesignVariableSet:
     def merge_parameter_lists(cls, merge_list: list[DesignVariableSet]) -> list[dict]:
         """
         Returns a merged parameter list, combined from multiple DesignVariableSets.
-        
+
         Args:
             merge_list: List of DesignVariableSet instances to merge
         """
@@ -112,10 +115,11 @@ class DesignVariableSet:
 class ObjectSet:
     """
     Generates object sets from design variables using a reference class.
-    
+
     Creates instances of a reference class for each parameter combination,
     handling errors gracefully and providing progress feedback.
     """
+
     reference_class: Callable
     param_list: list[dict]
     report_attrs: list[str] | None = None
@@ -131,8 +135,9 @@ class ObjectSet:
 
     def generate_object_set(self) -> Tuple[list, pd.DataFrame]:
         """
-        Calculate the object sets and object libraries from the provided reference class and design variable list.
-        
+        Calculate the object sets and object libraries from the provided reference class
+        and design variable list.
+
         Returns:
             Tuple of (object_set, object_library_dataframe)
         """
@@ -155,21 +160,21 @@ class ObjectSet:
                         attr_value_list.append(getattr(p_instance, attr_name))
                     else:
                         raise ValueError(
-                            f'Error: reportable attribute "{attr_name}" is not available in class definition.'
+                            f'Error: reportable attribute "{attr_name}" not available'
                         )
                 df.loc[len(df)] = attr_value_list
 
             except Exception as e:
                 print(f"Skipping param_list index {i} due to error: {e}")
                 self.skipped_indices.append(i)
-            
+
             count += 1
             interval = 1000
             if count % interval == 0:
                 print(f"Object #{count} completed")
-        
+
         print(f"Total count = {count}")
-        
+
         if self.value_fn is not None:
             df["value_fn"] = self.value_fn
         return obj_set, df
@@ -178,7 +183,7 @@ class ObjectSet:
         """
         Apply the query string to the object library.
         Rebuild the ObjectSet without items that match the query (return True).
-        
+
         Args:
             query_string: Pandas query string for filtering
         """
@@ -191,8 +196,9 @@ class ObjectSet:
 
     def make_name_dict(self, index_name: str) -> dict:
         """
-        Returns the object set as a named dictionary, using the object_library dataframe column index_name.
-        
+        Returns the object set as a named dictionary, using the object_library dataframe
+        column index_name.
+
         Args:
             index_name: Column name to use as dictionary keys
         """
@@ -205,10 +211,11 @@ class ObjectSet:
 class VerifiedObjectLibrary:
     """
     Compares generated object library against verification data.
-    
+
     Performs error analysis and generates verification reports for
     validating generated data against external sources.
     """
+
     object_library: pd.DataFrame
     verification_library: pd.DataFrame
     lookup_index: str
@@ -223,7 +230,7 @@ class VerifiedObjectLibrary:
     def check_error(self):
         """
         Compare object library against verification library and calculate errors.
-        
+
         Returns:
             DataFrame with error calculations for each parameter
         """
@@ -231,7 +238,7 @@ class VerifiedObjectLibrary:
         verify_df = self.verification_library
         lib_df = lib_df.set_index(self.lookup_index)
         verify_df = verify_df.set_index(self.lookup_index)
-        
+
         error_df = pd.DataFrame(index=lib_df.index, columns=lib_df.columns)
 
         for i, c in error_df.iterrows():
@@ -257,14 +264,14 @@ class VerifiedObjectLibrary:
     def error_report(self):
         """
         Generate verification report with coverage and error statistics.
-        
+
         Returns:
             DataFrame with verification statistics for each parameter
         """
         lib_df = self.object_library
         verify_df = self.verification_library
         result_df = self.result_df
-        
+
         report_df = pd.DataFrame(index=lib_df.columns)
         report_df.index.names = ["parameters"]
 
@@ -275,7 +282,7 @@ class VerifiedObjectLibrary:
         avg_abs_error_list = []
         min_error_list = []
         data_error_list = []
-        
+
         for param in report_df.index:
             if param in verify_df.columns:
                 check_list.append("yes")
@@ -283,7 +290,7 @@ class VerifiedObjectLibrary:
                     len(result_df[param].dropna()) / len(lib_df[param]) * 100
                 )  # in percentage%
                 coverage_list.append(round(coverage, 2))
-                
+
                 if type(result_df[param][0]) is str:  # string type data
                     max_error = "N/A"
                     avg_error = "N/A"
@@ -339,13 +346,13 @@ class VerifiedObjectLibrary:
     def error_calc(generated_value, verify_value, c, param):
         """
         Calculate error between generated and verification values.
-        
+
         Args:
             generated_value: Value from generated data
             verify_value: Value from verification data
             c: Current row (unused but kept for compatibility)
             param: Parameter name (unused but kept for compatibility)
-            
+
         Returns:
             Error value or match status
         """

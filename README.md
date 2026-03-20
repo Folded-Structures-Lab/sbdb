@@ -20,7 +20,7 @@ SBDB provides a systematic approach to generating and managing large datasets fo
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/sbdb.git
+git clone https://github.com/Folded-Structures-Lab/sbdb.git
 cd sbdb
 
 # Install in development mode
@@ -35,38 +35,6 @@ pip install -e .
 - pymongo ≥ 4.0.0
 - ssh-pymongo ≥ 0.3.0
 - python-dotenv ≥ 0.19.0
-
-## Package Structure
-
-```
-sbdb/
-├── src/sbdb/                          # Core SBDB framework
-│   ├── __init__.py
-│   ├── sets.py                        # Core set-based data structures
-│   └── database/                      # Database utilities
-│       ├── __init__.py
-│       ├── connection.py              # MongoDB connection utilities
-│       ├── population.py              # Database population functions
-│       └── utils.py                   # General I/O utilities
-├── examples/                          # Application examples
-│   └── steel_structural_design/       # Steel structural design examples
-│       ├── __init__.py
-│       ├── steel_utils.py             # Steel-specific utilities
-│       ├── generate_connections.py    # Connection generation example
-│       ├── verify_steel_db.py         # Verification example
-│       ├── populate_steel_db.py       # Database population example
-│       └── data/                      # Steel design data
-│           ├── input_data/            # Raw input data
-│           ├── design_variable_sets/  # Design variable definitions
-│           ├── collections_csv/       # Generated CSV collections
-│           ├── collections_json/      # Generated JSON collections
-│           ├── verification/          # Verification data sources
-│           ├── verification_results/  # Verification results
-│           └── verification_reports/  # Verification reports
-├── pyproject.toml                     # Package configuration
-├── README.md                          # This file
-└── LICENSE                           # License file
-```
 
 ## Quick Start
 
@@ -99,7 +67,7 @@ print(f"Generated {len(dvs.param_list)} parameter combinations")
 #     lookup_index="name"
 # )
 ```
-
+<!-- 
 ### Database Operations
 
 ```python
@@ -112,8 +80,8 @@ db = get_database(client, "your_database")
 # Populate collections
 population_list = [("collection_name", "json_filename")]
 populate_db(db, population_list, "/path/to/json/files")
-```
-
+``` -->
+<!-- 
 ## Steel Structural Design Example
 
 The `examples/steel_structural_design/` directory contains a comprehensive example demonstrating the framework's application to steel structural design:
@@ -137,7 +105,7 @@ python -m examples.steel_structural_design.populate_steel_db
 - **Member Generation**: Open sections, hollow sections, and tee sections
 - **Connection Generation**: FEP and WSP connection types
 - **Verification**: Comparison against ASI and Tekla verification data
-- **Database Integration**: MongoDB population and management
+- **Database Integration**: MongoDB population and management -->
 
 ## Core Classes
 
