@@ -1,20 +1,14 @@
 """
 Dataset Tracking Module
 
-This module provides utilities for tracking dataset generation, verification,
-and database population activities with timestamps and package version information.
+This module provides utilities for tracking dataset generation from
+ObjectSet JSON descriptor files.
 """
 
-from .dataset_tracker import (
-    DatasetTracker,
-    get_package_version,
-    get_file_metadata,
-    categorise_collection
-)
+from .dataset_tracker import DatasetTracker, get_file_metadata, get_package_version
 
 __all__ = [
     "DatasetTracker",
-    "get_package_version", 
     "get_file_metadata",
-    "categorise_collection"
+    "get_package_version",
 ]

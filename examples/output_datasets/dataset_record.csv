@@ -1,0 +1,2 @@
+dataset_name,json_descriptor,reference_class,reference_package_version,sbdb_version,output_folder,filetypes,output_files,record_count,last_generated,notes
+example2_bolt_library,examples/example2_bolt.json,steelas.component.bolt.Bolt,0.2.0,0.1.2,examples/output_datasets,"csv, json","examples/output_datasets\example2_bolt_library.csv, examples/output_datasets\example2_bolt_library.json",48,,
