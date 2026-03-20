@@ -17,5 +17,9 @@
     "second_moment",
     "mass"
   ],
-  "output": "examples/example1_simple_beam.csv"
+  "output": {
+    "folder": "examples/output_datasets",
+    "filename": "example1_simple_beam",
+    "filetypes": ["csv"]
+  }
 }

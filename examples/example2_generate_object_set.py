@@ -18,14 +18,15 @@ def main():
 
     # Generate object set from JSON descriptor file
     print("\n1. Generating object set from JSON descriptor...")
-    obj_set, exported_file = ObjectSet.from_json("examples/example2_AUS_bolt.json")
+    obj_set, exported_files = ObjectSet.from_json("examples/example2_AUS_bolt.json")
     print(f"   Successfully created {len(obj_set.object_set)} bolt objects")
-    if exported_file:
-        print(f"   Exported to: {exported_file}")
+    if exported_files:
+        for f in exported_files:
+            print(f"   Exported to: {f}")
 
     # Display sample results
     df = obj_set.object_library
-    print("\n3. Sample bolt library data (first 10 bolts):")
+    print("\n2. Sample bolt library data (first 10 bolts):")
     print(df.head(10))
 
 

@@ -1,0 +1,31 @@
+{
+  "reference_class": "steelas.component.bolt.BoltGroup",
+  "design_variables": {
+    "bolt": {
+        "reference_class": "steelas.component.bolt.Bolt",
+        "design_variables": {
+          "d_f": [20, 24],
+          "bolt_cat": ["8.8/S"],
+          "threads_included": [true]
+        }
+      },
+    "n_p": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "n_g": [1, 2, 3, 4],
+    "s_p": [70, 80, 90],
+    "s_g": [70, 90, 140]
+  },
+  "report_attrs": [
+    "name",
+    "bolt",
+    "n_p",
+    "n_g",
+    "s_p",
+    "s_g",
+    "constr"
+  ],
+  "output": {
+    "folder": "datasets/components",
+    "filename": "AUS_bolt_group",
+    "filetypes": ["csv"]
+  }
+}

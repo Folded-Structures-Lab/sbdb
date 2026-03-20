@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib
 import itertools
 import json
+import os
 from dataclasses import dataclass, field
 from typing import Callable, Tuple
 
@@ -235,7 +236,7 @@ class ObjectSet:
     @classmethod
     def from_json(
         cls, filename: str, autoexport: bool = True
-    ) -> Tuple[ObjectSet, str | None]:
+    ) -> Tuple[ObjectSet, list[str]]:
         """
         Create an ObjectSet from a JSON descriptor file.
 
@@ -245,18 +246,21 @@ class ObjectSet:
             - "design_variables" (required): Dict of variable names to value lists
             - "report_attrs" (optional): List of attribute names to report.
               If omitted, all class annotations are used.
-            - "output" (optional): File path to export the object library as CSV.
+            - "output" (optional): Export configuration dict with keys:
+                - "folder" (str): Output directory path
+                - "filename" (str): Base filename (without extension)
+                - "filetypes" (list[str]): List of file types to export
+                  (e.g., ["csv", "json"])
 
         Args:
             filename: Path to JSON descriptor file
-            autoexport: If True, automatically export to CSV when an
-                "output" path is specified in the JSON file. If False
-                (default), skip the export even if "output" is present.
+            autoexport: If True (default), automatically export files when
+                an "output" config is specified in the JSON file. If False,
+                skip the export even if "output" is present.
 
         Returns:
-            Tuple of (ObjectSet instance, exported file path or None).
-            The file path is the "output" value from the JSON if autoexport
-            was True and the file was written, otherwise None.
+            Tuple of (ObjectSet instance, list of exported file paths).
+            The list is empty if autoexport is False or no output is configured.
 
         Example JSON file::
 
@@ -268,7 +272,11 @@ class ObjectSet:
                     "threads_included": [true, false]
                 },
                 "report_attrs": ["name", "d_f", "phiV_f", "phiN_tf"],
-                "output": "bolt_library.csv"
+                "output": {
+                    "folder": "examples",
+                    "filename": "bolt_library",
+                    "filetypes": ["csv", "json"]
+                }
             }
         """
         with open(filename) as json_file:
@@ -292,7 +300,7 @@ class ObjectSet:
 
         # Extract optional fields
         report_attrs = data.get("report_attrs", None)
-        output = data.get("output", None)
+        output_config = data.get("output", None)
 
         # Create the ObjectSet
         obj_set = cls(
@@ -301,13 +309,29 @@ class ObjectSet:
             report_attrs=report_attrs,
         )
 
-        # Export to CSV if output path specified and autoexport is enabled
-        exported_file = None
-        if autoexport and output is not None:
-            obj_set.object_library.to_csv(output, index=False)
-            exported_file = output
+        # Export files if output config specified and autoexport is enabled
+        exported_files = []
+        if autoexport and output_config is not None:
+            folder = output_config.get("folder", ".")
+            base_filename = output_config.get("filename", "output")
+            filetypes = output_config.get("filetypes", ["csv"])
 
-        return obj_set, exported_file
+            # Create output folder if it doesn't exist
+            os.makedirs(folder, exist_ok=True)
+
+            for filetype in filetypes:
+                filepath = os.path.join(folder, f"{base_filename}.{filetype}")
+                if filetype == "csv":
+                    obj_set.object_library.to_csv(filepath, index=False)
+                elif filetype == "json":
+                    obj_set.object_library.to_json(
+                        filepath, orient="records", indent=2
+                    )
+                else:
+                    raise ValueError(f"Unsupported file type: '{filetype}'")
+                exported_files.append(filepath)
+
+        return obj_set, exported_files
 
 
 @dataclass(kw_only=True)

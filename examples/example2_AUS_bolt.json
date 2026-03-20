@@ -17,5 +17,9 @@
     "phiV_f",
     "phiN_tf"
   ],
-  "output": "examples/example2_AUS_bolt_library.csv"
+  "output": {
+    "folder": "examples/output_datasets",
+    "filename": "example2_AUS_bolt_library",
+    "filetypes": ["csv", "json"]
+  }
 }

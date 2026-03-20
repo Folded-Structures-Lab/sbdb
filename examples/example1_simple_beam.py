@@ -45,12 +45,13 @@ def main():
     print("SBDB Basic Example")
     print("=" * 50)
 
-    # Generate object set from JSON descriptor file
+    # Generate object set from JSON descriptor file (no autoexport for this example)
     print("\n1. Generating object set from JSON descriptor...")
-    obj_set, exported_file = ObjectSet.from_json("examples/example1_simple_beam.json")
+    obj_set, exported_files = ObjectSet.from_json("examples/example1_simple_beam.json")
     print(f"   Successfully created {len(obj_set.object_set)} beam objects")
-    if exported_file:
-        print(f"   Exported to: {exported_file}")
+    if exported_files:
+        for f in exported_files:
+            print(f"   Exported to: {f}")
 
     # Display results
     print("\n2. Object Library:")
