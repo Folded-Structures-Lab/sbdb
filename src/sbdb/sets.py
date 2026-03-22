@@ -8,6 +8,7 @@ object sets, and verification data sets in set-based structural design workflows
 from __future__ import annotations
 
 import importlib
+import inspect
 import itertools
 import json
 import os
@@ -16,6 +17,34 @@ from typing import Callable, Tuple
 
 import numpy as np
 import pandas as pd
+
+
+def _get_init_params(cls: type) -> set[str] | None:
+    """
+    Get valid ``__init__`` parameter names for a class.
+
+    Returns:
+        Set of parameter names accepted by the class constructor,
+        or None if the constructor accepts **kwargs (meaning all
+        keyword arguments are valid).
+    """
+    sig = inspect.signature(cls.__init__)
+    has_var_keyword = any(
+        p.kind == inspect.Parameter.VAR_KEYWORD
+        for p in sig.parameters.values()
+    )
+    if has_var_keyword:
+        return None  # accepts anything
+    return {
+        name
+        for name, param in sig.parameters.items()
+        if name != "self"
+        and param.kind
+        in (
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+    }
 
 
 def _import_class(dotted_path: str) -> type:
@@ -174,13 +203,24 @@ class ObjectSet:
         df = pd.DataFrame(data=None, columns=df_columns)
         obj_set = []
 
+        # Determine valid __init__ params for the reference class
+        # so we can filter out extra keys that would cause errors.
+        valid_params = _get_init_params(self.reference_class)
+
         # Keep track of which indices are skipped
         self.skipped_indices = []
         count = 0
 
         for i, p in enumerate(self.param_list):
             try:
-                p_instance = self.reference_class(**p)
+                # Filter params to only those accepted by the class
+                if valid_params is not None:
+                    p_filtered = {
+                        k: v for k, v in p.items() if k in valid_params
+                    }
+                else:
+                    p_filtered = p
+                p_instance = self.reference_class(**p_filtered)
                 obj_set.append(p_instance)
                 # Add all class attributes to the dataframe
                 attr_value_list = []
