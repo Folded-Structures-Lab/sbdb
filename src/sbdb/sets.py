@@ -344,11 +344,77 @@ class ObjectSet:
         report_attrs = data.get("report_attrs", None)
         output_config = data.get("output", None)
 
-        # Handle design_parameter_dict mode: load CSV as param_list, then generate
+        # Handle design_parameter_dict mode
         if "design_parameter_dict" in data:
-            import_path = data["design_parameter_dict"]
-            import_df = pd.read_csv(import_path)
-            param_list = import_df.to_dict(orient="records")
+            dpd = data["design_parameter_dict"]
+
+            if isinstance(dpd, str):
+                # CSV file path — load rows directly
+                import_df = pd.read_csv(dpd)
+                param_list = import_df.to_dict(orient="records")
+
+            elif isinstance(dpd, dict):
+                # Inline dict — resolve each entry, then zip
+                resolved = {}
+                for param_name, param_value in dpd.items():
+                    if (
+                        isinstance(param_value, dict)
+                        and "reference_class" in param_value
+                    ):
+                        # Nested ObjectSet descriptor
+                        nested_cls = _import_class(
+                            param_value["reference_class"]
+                        )
+                        if "design_parameter_dict" in param_value:
+                            nested_dpd = param_value[
+                                "design_parameter_dict"
+                            ]
+                            nested_df = pd.read_csv(nested_dpd)
+                            nested_pl = nested_df.to_dict(
+                                orient="records"
+                            )
+                        elif "design_parameter_set" in param_value:
+                            nested_dvs = DesignParameterSet(
+                                design_param_sets=param_value[
+                                    "design_parameter_set"
+                                ]
+                            )
+                            nested_pl = nested_dvs.param_list
+                        else:
+                            raise ValueError(
+                                f"Nested param '{param_name}' needs "
+                                "'design_parameter_set' or "
+                                "'design_parameter_dict'"
+                            )
+                        nested_obj = cls(
+                            reference_class=nested_cls,
+                            param_list=nested_pl,
+                            report_attrs=param_value.get(
+                                "report_attrs", None
+                            ),
+                        )
+                        resolved[param_name] = nested_obj.object_set
+                    elif isinstance(param_value, list):
+                        resolved[param_name] = param_value
+                    else:
+                        raise ValueError(
+                            f"Unsupported value type for "
+                            f"'{param_name}' in "
+                            "design_parameter_dict"
+                        )
+
+                # Zip the resolved lists into param dicts
+                keys = list(resolved.keys())
+                values = list(resolved.values())
+                param_list = [
+                    dict(zip(keys, row)) for row in zip(*values)
+                ]
+                import_df = None
+            else:
+                raise ValueError(
+                    "'design_parameter_dict' must be a CSV file "
+                    "path (string) or an inline dict"
+                )
 
             # If reference_class is provided, instantiate objects
             if "reference_class" in data:
@@ -360,6 +426,8 @@ class ObjectSet:
                 )
             else:
                 # No class — just use the CSV as the library directly
+                if import_df is None:
+                    import_df = pd.DataFrame(param_list)
                 if report_attrs is not None:
                     import_df = import_df[report_attrs]
                 obj_set = object.__new__(cls)
@@ -396,14 +464,30 @@ class ObjectSet:
                     nested_class = _import_class(
                         var_value["reference_class"]
                     )
-                    nested_dvs = DesignParameterSet(
-                        design_param_sets=var_value[
-                            "design_parameter_set"
+                    if "design_parameter_dict" in var_value:
+                        nested_dpd = var_value[
+                            "design_parameter_dict"
                         ]
-                    )
+                        nested_df = pd.read_csv(nested_dpd)
+                        nested_pl = nested_df.to_dict(
+                            orient="records"
+                        )
+                    elif "design_parameter_set" in var_value:
+                        nested_dvs = DesignParameterSet(
+                            design_param_sets=var_value[
+                                "design_parameter_set"
+                            ]
+                        )
+                        nested_pl = nested_dvs.param_list
+                    else:
+                        raise ValueError(
+                            f"Nested param '{var_name}' needs "
+                            "'design_parameter_set' or "
+                            "'design_parameter_dict'"
+                        )
                     nested_obj_set = cls(
                         reference_class=nested_class,
-                        param_list=nested_dvs.param_list,
+                        param_list=nested_pl,
                         report_attrs=var_value.get(
                             "report_attrs", None
                         ),
