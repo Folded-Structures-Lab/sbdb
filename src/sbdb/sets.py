@@ -276,6 +276,109 @@ class ObjectSet:
         return dict(zip(keys, vals))
 
     @classmethod
+    def _resolve_descriptor(cls, descriptor: dict) -> ObjectSet:
+        """Recursively resolve an ObjectSet descriptor dict.
+
+        Handles both ``design_parameter_set`` (Cartesian product) and
+        ``design_parameter_dict`` (zip / CSV import) modes, including
+        arbitrarily nested descriptors.
+
+        Args:
+            descriptor: A dict with ``reference_class`` and either
+                ``design_parameter_set`` or ``design_parameter_dict``.
+
+        Returns:
+            The resolved ObjectSet.
+        """
+        reference_class = _import_class(descriptor["reference_class"])
+        report_attrs = descriptor.get("report_attrs", None)
+
+        if "design_parameter_dict" in descriptor:
+            param_list = cls._resolve_param_dict(
+                descriptor["design_parameter_dict"]
+            )
+        elif "design_parameter_set" in descriptor:
+            param_list = cls._resolve_param_set(
+                descriptor["design_parameter_set"]
+            )
+        else:
+            raise ValueError(
+                "Descriptor needs 'design_parameter_set' or "
+                "'design_parameter_dict'"
+            )
+
+        return cls(
+            reference_class=reference_class,
+            param_list=param_list,
+            report_attrs=report_attrs,
+        )
+
+    @classmethod
+    def _resolve_param_dict(cls, dpd) -> list[dict]:
+        """Resolve a ``design_parameter_dict`` value.
+
+        Args:
+            dpd: Either a CSV file path (str) or an inline dict
+                whose values are lists, or nested ObjectSet descriptors.
+
+        Returns:
+            A list of param dicts (one per row / zipped entry).
+        """
+        if isinstance(dpd, str):
+            return pd.read_csv(dpd).to_dict(orient="records")
+
+        if isinstance(dpd, dict):
+            resolved = {}
+            for name, value in dpd.items():
+                if (
+                    isinstance(value, dict)
+                    and "reference_class" in value
+                ):
+                    nested = cls._resolve_descriptor(value)
+                    resolved[name] = nested.object_set
+                elif isinstance(value, list):
+                    resolved[name] = value
+                else:
+                    raise ValueError(
+                        f"Unsupported value type for "
+                        f"'{name}' in design_parameter_dict"
+                    )
+            keys = list(resolved.keys())
+            values = list(resolved.values())
+            return [
+                dict(zip(keys, row)) for row in zip(*values)
+            ]
+
+        raise ValueError(
+            "'design_parameter_dict' must be a CSV file "
+            "path (string) or an inline dict"
+        )
+
+    @classmethod
+    def _resolve_param_set(cls, dps: dict) -> list[dict]:
+        """Resolve a ``design_parameter_set`` value.
+
+        Handles nested ObjectSet descriptors within the set
+        (which become lists of objects for Cartesian product).
+
+        Args:
+            dps: Dict of variable names to value lists or nested
+                ObjectSet descriptors.
+
+        Returns:
+            A list of param dicts (Cartesian product).
+        """
+        for var_name, var_value in dps.items():
+            if (
+                isinstance(var_value, dict)
+                and "reference_class" in var_value
+            ):
+                nested = cls._resolve_descriptor(var_value)
+                dps[var_name] = nested.object_set
+        dvs = DesignParameterSet(design_param_sets=dps)
+        return dvs.param_list
+
+    @classmethod
     def from_json(
         cls, filename: str, autoexport: bool = True
     ) -> Tuple[ObjectSet, list[str]]:
@@ -288,11 +391,14 @@ class ObjectSet:
             - "reference_class" (required): Dotted import path to the class
               (e.g., "steelas.component.bolt.Bolt")
             - "design_parameter_set" (required): Dict of variable names to
-              value lists
+              value lists. Generates Cartesian product of all combinations.
 
         **Import mode** (design_parameter_dict):
-            - "design_parameter_dict" (required): Path to a CSV file to load directly
-              as the object library. No class instantiation is performed.
+            - "design_parameter_dict": Either a CSV file path (string) or
+              an inline dict whose values are lists or nested ObjectSet
+              descriptors. Entries are zipped 1-to-1.
+
+        Nested descriptors are resolved recursively to arbitrary depth.
 
         **Common optional fields** (both modes):
             - "report_attrs" (optional): List of attribute/column names to
@@ -334,7 +440,10 @@ class ObjectSet:
             data = json.load(json_file)
 
         # Validate required fields
-        if "reference_class" not in data and "design_parameter_dict" not in data:
+        if (
+            "reference_class" not in data
+            and "design_parameter_dict" not in data
+        ):
             raise ValueError(
                 f"JSON file '{filename}' missing 'reference_class' "
                 "or 'design_parameter_dict'"
@@ -346,88 +455,23 @@ class ObjectSet:
 
         # Handle design_parameter_dict mode
         if "design_parameter_dict" in data:
-            dpd = data["design_parameter_dict"]
-
-            if isinstance(dpd, str):
-                # CSV file path — load rows directly
-                import_df = pd.read_csv(dpd)
-                param_list = import_df.to_dict(orient="records")
-
-            elif isinstance(dpd, dict):
-                # Inline dict — resolve each entry, then zip
-                resolved = {}
-                for param_name, param_value in dpd.items():
-                    if (
-                        isinstance(param_value, dict)
-                        and "reference_class" in param_value
-                    ):
-                        # Nested ObjectSet descriptor
-                        nested_cls = _import_class(
-                            param_value["reference_class"]
-                        )
-                        if "design_parameter_dict" in param_value:
-                            nested_dpd = param_value[
-                                "design_parameter_dict"
-                            ]
-                            nested_df = pd.read_csv(nested_dpd)
-                            nested_pl = nested_df.to_dict(
-                                orient="records"
-                            )
-                        elif "design_parameter_set" in param_value:
-                            nested_dvs = DesignParameterSet(
-                                design_param_sets=param_value[
-                                    "design_parameter_set"
-                                ]
-                            )
-                            nested_pl = nested_dvs.param_list
-                        else:
-                            raise ValueError(
-                                f"Nested param '{param_name}' needs "
-                                "'design_parameter_set' or "
-                                "'design_parameter_dict'"
-                            )
-                        nested_obj = cls(
-                            reference_class=nested_cls,
-                            param_list=nested_pl,
-                            report_attrs=param_value.get(
-                                "report_attrs", None
-                            ),
-                        )
-                        resolved[param_name] = nested_obj.object_set
-                    elif isinstance(param_value, list):
-                        resolved[param_name] = param_value
-                    else:
-                        raise ValueError(
-                            f"Unsupported value type for "
-                            f"'{param_name}' in "
-                            "design_parameter_dict"
-                        )
-
-                # Zip the resolved lists into param dicts
-                keys = list(resolved.keys())
-                values = list(resolved.values())
-                param_list = [
-                    dict(zip(keys, row)) for row in zip(*values)
-                ]
-                import_df = None
-            else:
-                raise ValueError(
-                    "'design_parameter_dict' must be a CSV file "
-                    "path (string) or an inline dict"
-                )
+            param_list = cls._resolve_param_dict(
+                data["design_parameter_dict"]
+            )
 
             # If reference_class is provided, instantiate objects
             if "reference_class" in data:
-                reference_class = _import_class(data["reference_class"])
+                reference_class = _import_class(
+                    data["reference_class"]
+                )
                 obj_set = cls(
                     reference_class=reference_class,
                     param_list=param_list,
                     report_attrs=report_attrs,
                 )
             else:
-                # No class — just use the CSV as the library directly
-                if import_df is None:
-                    import_df = pd.DataFrame(param_list)
+                # No class — use as library directly
+                import_df = pd.DataFrame(param_list)
                 if report_attrs is not None:
                     import_df = import_df[report_attrs]
                 obj_set = object.__new__(cls)
@@ -451,58 +495,15 @@ class ObjectSet:
                     "field 'design_parameter_set'"
                 )
 
-            # Import the reference class from dotted path
-            reference_class = _import_class(data["reference_class"])
-
-            # Resolve nested object set design parameters
-            design_vars = data["design_parameter_set"]
-            for var_name, var_value in design_vars.items():
-                if (
-                    isinstance(var_value, dict)
-                    and "reference_class" in var_value
-                ):
-                    nested_class = _import_class(
-                        var_value["reference_class"]
-                    )
-                    if "design_parameter_dict" in var_value:
-                        nested_dpd = var_value[
-                            "design_parameter_dict"
-                        ]
-                        nested_df = pd.read_csv(nested_dpd)
-                        nested_pl = nested_df.to_dict(
-                            orient="records"
-                        )
-                    elif "design_parameter_set" in var_value:
-                        nested_dvs = DesignParameterSet(
-                            design_param_sets=var_value[
-                                "design_parameter_set"
-                            ]
-                        )
-                        nested_pl = nested_dvs.param_list
-                    else:
-                        raise ValueError(
-                            f"Nested param '{var_name}' needs "
-                            "'design_parameter_set' or "
-                            "'design_parameter_dict'"
-                        )
-                    nested_obj_set = cls(
-                        reference_class=nested_class,
-                        param_list=nested_pl,
-                        report_attrs=var_value.get(
-                            "report_attrs", None
-                        ),
-                    )
-                    design_vars[var_name] = (
-                        nested_obj_set.object_set
-                    )
-
-            # Build design parameter set
-            dvs = DesignParameterSet(design_param_sets=design_vars)
-
-            # Create the ObjectSet
+            reference_class = _import_class(
+                data["reference_class"]
+            )
+            param_list = cls._resolve_param_set(
+                data["design_parameter_set"]
+            )
             obj_set = cls(
                 reference_class=reference_class,
-                param_list=dvs.param_list,
+                param_list=param_list,
                 report_attrs=report_attrs,
             )
 
